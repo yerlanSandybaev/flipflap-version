@@ -16,10 +16,27 @@ function Login() {
 
     try {
       const response = await axios.post('/api/auth/login', { email, password });
+      // Debug log: inspect response shape in case server returns unexpected structure
+      // (this helps when login appears to succeed but navigation doesn't happen)
+      // eslint-disable-next-line no-console
+      console.log('Login response', response?.data);
+
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('userId', response.data.user.id);
       localStorage.setItem('username', response.data.user.username);
+
+      // Navigate via React Router and also provide a fallback full-page redirect
+      // in case route-based navigation isn't triggering (helps when app state
+      // doesn't re-evaluate immediately in some environments).
       navigate('/home');
+      // Fallback: if the location hasn't changed after a short delay, force navigation
+      setTimeout(() => {
+        if (window.location.pathname !== '/home') {
+          // eslint-disable-next-line no-console
+          console.warn('Fallback redirect to /home');
+          window.location.href = '/home';
+        }
+      }, 400);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
